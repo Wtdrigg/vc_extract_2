@@ -2,6 +2,8 @@
 This module contains the Extractor class and imports all of its dependencies.
 """
 
+import os
+import time
 import datetime
 import clipboard
 from os import getcwd
@@ -15,6 +17,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.chrome.service import Service as ChromeService
+from subprocess import CREATE_NO_WINDOW
 
 
 # Extractor class is used to pull all vendor info from the Vcommerce system and add it to an Excel spreadsheet.
@@ -58,7 +62,9 @@ class Extractor:
         print('Initializing Webdriver')
         driver_options = webdriver.ChromeOptions()
         driver_options.add_argument('user-data-dir=' + self.cwd + '/User Data')
-        create_driver = webdriver.Chrome(options=driver_options, executable_path=self.cwd + '/chromedriver.exe')
+        chrome_service = ChromeService(self.cwd + '/chromedriver.exe')
+        chrome_service.creationflags = CREATE_NO_WINDOW
+        create_driver = webdriver.Chrome(options=driver_options, executable_path=self.cwd + '/chromedriver.exe', service=chrome_service)
         return create_driver
 
     # Closes down all pages on the chromedriver.
@@ -69,18 +75,19 @@ class Extractor:
     # will create one based off the template found in the working directory.
     @staticmethod
     def create_excel():
+        downloads_path = os.path.expanduser("~") + "/Downloads/"
         try:
-            ex_workbook = load_workbook('C:/Users/Tyler/Downloads/BCS_New_vendors_' + str(datetime.date.today())
-                                        + '.xlsx')
+            ex_workbook = load_workbook(downloads_path + "BCS_New_Vendors_" + str(datetime.date.today()) + ".xlsx")
         except FileNotFoundError:
-            ex_workbook = load_workbook('BCS_template.xlsx')
-        ex_worksheet = ex_workbook.active
+            ex_workbook = load_workbook("BCS_template.xlsx")
+        ex_worksheet = ex_workbook.worksheets[0]
         return ex_workbook, ex_worksheet
 
     # Saves all changes made to the Excel spreadsheet and adjust the length of cells so all information is readable.
     # If this is a newly created spreadsheet it will be named: "BCS_New_vendors_<today's_date>"
     def format_and_save_excel(self):
         column_names = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P')
+        downloads_path = os.path.expanduser("~") + "/Downloads/"
         index_counter = 0
         max_length = 0
         for column in self.ex_worksheet.columns:
@@ -91,7 +98,7 @@ class Extractor:
                 max_length = max(length_list)
             self.ex_worksheet.column_dimensions[column_names[index_counter]].width = (max_length + 2)
             index_counter += 1
-        self.ex_workbook.save('C:/Users/Tyler/Downloads/' + 'BCS_New_Vendors_' + str(datetime.date.today())
+        self.ex_workbook.save(downloads_path + 'BCS_New_Vendors_' + str(datetime.date.today())
                               + '.xlsx')
 
     # Adds the provided value parameter to the spreadsheet cell located at the provided cell_coord parameter.
@@ -240,6 +247,21 @@ class Extractor:
         cert_download = self.driver.find_element(By.XPATH, self.map.full_xpath['cert_download'])
         cert_download.click()
 
+    # Checks the download folder to see if there is a file being downloaded. Files currently being downloaded
+    # by chrome have the suffix .crdownload, so this method checks the downloads folder and only proceeds when
+    # a .crdownload file is not found.
+    @staticmethod
+    def wait_for_download():
+        download_path = os.path.expanduser("~") + "/Downloads/"
+        download_wait = True
+        while download_wait:
+            time.sleep(1)
+            download_wait = False
+            for item in os.listdir(download_path):
+                if item.endswith('.crdownload'):
+                    download_wait = True
+                    break
+
     # Searches the saved list attribute and identifies the supplier id number. This method then calls the
     # add_to_excel() method to save it to the spreadsheet. If there is no supplier id found it will return
     # a boolean to tell the find_vc_number() method to use the vcommerce number in place of the supplier id number.
@@ -252,7 +274,6 @@ class Extractor:
                     supplier_id = self.input_list[temp_index + 1]
                     if supplier_id != 'No':
                         sleep(0.5)
-                        # self.add_to_excel('A1', 'Vendor ID:')
                         blank_cell = self.find_blank_cell_in_column(self.ex_worksheet['A'])
                         self.add_to_excel(blank_cell, supplier_id)
                         return False
@@ -345,9 +366,14 @@ class Extractor:
                 temp_index = input_list_split.index(item)
                 if input_list_split[temp_index - 2] == 'Supplier Number\r':
                     vendor_dba = self.vendor_name_format(input_list_split[temp_index - 3])
-                    blank_cell = self.find_blank_cell_in_column(self.ex_worksheet['C'])
-                    self.add_to_excel(blank_cell, vendor_dba)
+                    if vendor_dba == '':
+                        blank_cell = self.find_blank_cell_in_column(self.ex_worksheet['C'])
+                        self.add_to_excel(blank_cell, 'N/A')
+                    else:
+                        blank_cell = self.find_blank_cell_in_column(self.ex_worksheet['C'])
+                        self.add_to_excel(blank_cell, vendor_dba)
                 elif input_list_split[temp_index - 1] != '\r':
+                    print(repr(input_list_split[temp_index - 1]))
                     vendor_dba = self.vendor_name_format(input_list_split[temp_index - 1])
                     blank_cell = self.find_blank_cell_in_column(self.ex_worksheet['C'])
                     self.add_to_excel(blank_cell, vendor_dba)
@@ -531,6 +557,7 @@ class Extractor:
         self.open_vcommerce()
         self.get_vc_and_contact_info()
         self.find_and_download_cert()
+        self.wait_for_download()
         self.copy_and_parse_clipboard()
         no_id = self.find_supplier_id()
         self.find_vc_number(no_id)
@@ -543,4 +570,5 @@ class Extractor:
         self.find_post_owner(state)
         self.enter_vmc()
         self.format_and_save_excel()
+        # clears the information from the clipboard once the extract is done.
         clipboard.copy('')
