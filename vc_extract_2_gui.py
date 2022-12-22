@@ -65,11 +65,14 @@ class ExtractButtons:
     def __init__(self, gui_obj):
         self.extractor_obj = None
         self.gui_obj = gui_obj
-        self.extract_button = tk.Button(self.gui_obj.frame.main_frame, text="Extract", width=20,
-                                        command=self.press_extract)
-        self.extract_button.place(anchor="nw", x=25, y=175)
-        self.quit_button = tk.Button(self.gui_obj.frame.main_frame, text='Quit', width=20, command=self.press_quit)
-        self.quit_button.place(anchor="nw", x=200, y=175)
+        self.new_extract_button = tk.Button(self.gui_obj.frame.main_frame, text="New Extract", width=12,
+                                            command=self.press_new_extract)
+        self.new_extract_button.place(anchor="nw", x=25, y=175)
+        self.existing_extract_button = tk.Button(self.gui_obj.frame.main_frame, text="Existing Extract", width=12,
+                                                 command=self.press_exist_extract)
+        self.existing_extract_button.place(anchor='nw', x=150, y=175)
+        self.quit_button = tk.Button(self.gui_obj.frame.main_frame, text='Quit', width=12, command=self.press_quit)
+        self.quit_button.place(anchor="nw", x=275, y=175)
 
     # Closes the webdriver and then the GUI
     def press_quit(self):
@@ -77,7 +80,7 @@ class ExtractButtons:
 
     # Takes the data from the password and vc_number entry boxes and uses them as the arguments to build the
     # extractor object. Once build, the extract() method is called, and then the webdriver is closed again.
-    def press_extract(self):
+    def press_new_extract(self):
         # noinspection PyBroadException
         try:
             vc_password = self.gui_obj.entry_boxes.pass_box.get()
@@ -85,7 +88,24 @@ class ExtractButtons:
             self.gui_obj.labels.status_label.config(text="Extracting...")
             self.gui_obj.root.update()
             self.extractor_obj = Extractor(vc_password, vc_number)
-            self.extractor_obj.extract()
+            self.extractor_obj.extract_new()
+            self.extractor_obj.chromedriver_close()
+            self.gui_obj.entry_boxes.vc_num_box.delete(0, 'end')
+            self.gui_obj.labels.status_label.config(text="Extract Completed")
+            self.gui_obj.root.update()
+        except Exception:
+            self.gui_obj.labels.status_label.config(text="Error Detected")
+            self.gui_obj.root.update()
+
+    def press_exist_extract(self):
+        # noinspection PyBroadException
+        try:
+            vc_password = self.gui_obj.entry_boxes.pass_box.get()
+            vc_number = self.gui_obj.entry_boxes.vc_num_box.get()
+            self.gui_obj.labels.status_label.config(text="Extracting...")
+            self.gui_obj.root.update()
+            self.extractor_obj = Extractor(vc_password, vc_number)
+            self.extractor_obj.extract_existing()
             self.extractor_obj.chromedriver_close()
             self.gui_obj.entry_boxes.vc_num_box.delete(0, 'end')
             self.gui_obj.labels.status_label.config(text="Extract Completed")

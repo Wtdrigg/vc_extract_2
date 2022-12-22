@@ -36,7 +36,7 @@ class Extractor:
         self.driver = self.chromedriver_setup()
         self.map = Map()
         self.actions = ActionChains(self.driver)
-        self.ex_workbook, self.ex_worksheet = self.create_excel()
+        self.ex_workbook, self.ex_worksheet = (None, None)
         self.vendor_info = VendorInfo()
 
     # Checks if the input provided by the users is a correct 10 digit Vcommerce number.
@@ -56,15 +56,16 @@ class Extractor:
                              'not \n accidentally copy any whitespace before the number as that is the most common '
                              'cause of this error.\n')
 
-    # Sets up the chromedriver as part of the constructor. Requires a copy of Chromes user data to be located in the
-    # working directory, as well as a version of chromedriver.exe that matches your web browser version.
+    # Sets up the chromedriver as part of the constructor. Requires a copy of Chrome's user data folder to be located
+    # in the working directory, as well as a version of chromedriver.exe that matches your web browser version.
     def chromedriver_setup(self):
         print('Initializing Webdriver')
         driver_options = webdriver.ChromeOptions()
         driver_options.add_argument('user-data-dir=' + self.cwd + '/User Data')
         chrome_service = ChromeService(self.cwd + '/chromedriver.exe')
         chrome_service.creationflags = CREATE_NO_WINDOW
-        create_driver = webdriver.Chrome(options=driver_options, executable_path=self.cwd + '/chromedriver.exe', service=chrome_service)
+        create_driver = webdriver.Chrome(options=driver_options, executable_path=self.cwd + '/chromedriver.exe',
+                                         service=chrome_service)
         return create_driver
 
     # Closes down all pages on the chromedriver.
@@ -74,13 +75,25 @@ class Extractor:
     # Opens and returns the Excel spreadsheet for the day. If that days' spreadsheet does not exist, it
     # will create one based off the template found in the working directory.
     @staticmethod
-    def create_excel():
+    def create_excel_new_vendor():
         downloads_path = os.path.expanduser("~") + "/Downloads/"
         try:
             ex_workbook = load_workbook(downloads_path + "BCS_New_Vendors_" + str(datetime.date.today()) + ".xlsx")
         except FileNotFoundError:
             ex_workbook = load_workbook("BCS_template.xlsx")
         ex_worksheet = ex_workbook.worksheets[0]
+        return ex_workbook, ex_worksheet
+
+    # Opens and returns the Excel spreadsheet for the day. If that days' spreadsheet does not exist, it
+    # will create one based off the template found in the working directory.
+    @staticmethod
+    def create_excel_existing_vendor():
+        downloads_path = os.path.expanduser("~") + "/Downloads/"
+        try:
+            ex_workbook = load_workbook(downloads_path + "BCS_New_Vendors_" + str(datetime.date.today()) + ".xlsx")
+        except FileNotFoundError:
+            ex_workbook = load_workbook("BCS_template.xlsx")
+        ex_worksheet = ex_workbook.worksheets[2]
         return ex_workbook, ex_worksheet
 
     # Saves all changes made to the Excel spreadsheet and adjust the length of cells so all information is readable.
@@ -552,7 +565,30 @@ class Extractor:
     # Extract instructions. Calls all previous methods in the correct order and passes parameters between them as
     # needed. This will Successfully log into Vcommerce, search the vendor, pull its info, format the info, and add it
     # to a spreadsheet. This will also download the vendors provided certificates of insurance.
-    def extract(self):
+    def extract_new(self):
+        self.ex_workbook, self.ex_worksheet = self.create_excel_new_vendor()
+        self.verify_user_input()
+        self.open_vcommerce()
+        self.get_vc_and_contact_info()
+        self.find_and_download_cert()
+        self.wait_for_download()
+        self.copy_and_parse_clipboard()
+        no_id = self.find_supplier_id()
+        self.find_vc_number(no_id)
+        self.find_vendor_name()
+        self.find_vendor_dba()
+        state = self.find_vendor_address()
+        self.enter_service_type()
+        self.enter_vendor_tier()
+        self.find_division(state)
+        self.find_post_owner(state)
+        self.enter_vmc()
+        self.format_and_save_excel()
+        # clears the information from the clipboard once the extract is done.
+        clipboard.copy('')
+
+    def extract_existing(self):
+        self.ex_workbook, self.ex_worksheet = self.create_excel_existing_vendor()
         self.verify_user_input()
         self.open_vcommerce()
         self.get_vc_and_contact_info()
