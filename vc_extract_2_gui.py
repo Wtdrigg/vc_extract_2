@@ -7,6 +7,7 @@ the primary classes' constructor.
 import tkinter as tk
 from vc_extractor import Extractor
 from vc_approval import Approval
+from vc_update import Updater
 
 
 class ExtractGUI:
@@ -33,8 +34,9 @@ class MenuBar:
         self.gui_obj = gui_obj
         self.menu_bar = tk.Menu(self.gui_obj.root)
         self.file = tk.Menu(self.menu_bar, tearoff=0)
-        self.file.add_command(label="Approval Mode", command=self.click_approval)
-        self.file.add_command(label="Extraction Mode", command=self.click_extraction)
+        self.file.add_command(label='Approval Mode', command=self.click_approval)
+        self.file.add_command(label='Extraction Mode', command=self.click_extraction)
+        self.file.add_command(label='Update Mode', command=self.click_update)
         self.menu_bar.add_cascade(label='File', menu=self.file)
         self.menu_bar.add_cascade(label='Error Log')
         self.gui_obj.root.config(menu=self.menu_bar)
@@ -52,6 +54,14 @@ class MenuBar:
         self.gui_obj.frame = ApproveFrame(self.gui_obj)
         self.gui_obj.listbox = ApproveListBox(self.gui_obj)
         self.gui_obj.buttons = ApproveButtons(self.gui_obj)
+        self.gui_obj.root.update()
+
+    def click_update(self):
+        self.gui_obj.root.title('VC Extract 2 - Update Mode')
+        self.gui_obj.frame = UpdateFrame(self.gui_obj)
+        self.gui_obj.labels = UpdateLabels(self.gui_obj)
+        self.gui_obj.entry_boxes = UpdateEntryBox(self.gui_obj)
+        self.gui_obj.buttons = UpdateButtons(self.gui_obj)
         self.gui_obj.root.update()
 
 
@@ -73,6 +83,14 @@ class ApproveFrame:
         self.main_frame.place(anchor='nw', width=400, height=225)
 
 
+class UpdateFrame:
+
+    # Constructor builds the approval frame object and places it in the GUI root.
+    def __init__(self, gui_obj):
+        self.gui_obj = gui_obj
+        self.main_frame = tk.Frame(self.gui_obj.root, bd=5)
+        self.main_frame.place(anchor='nw', width=400, height=225)
+
 class ExtractEntryBox:
 
     # Constructor builds the entry box objects and places them in the GUI root.
@@ -82,6 +100,17 @@ class ExtractEntryBox:
         self.pass_box.place(anchor='nw', x=200, y=25)
         self.vc_num_box = tk.Entry(self.gui_obj.frame.main_frame, width=25)
         self.vc_num_box.place(anchor='nw', x=200, y=75)
+
+
+class UpdateEntryBox:
+
+    # Constructor builds the entry box objects and places them in the GUI root.
+    def __init__(self, gui_obj):
+        self.gui_obj = gui_obj
+        self.pass_box = tk.Entry(self.gui_obj.frame.main_frame, width=25, show='*')
+        self.pass_box.place(anchor='nw', x=200, y=25)
+        self.count_box = tk.Entry(self.gui_obj.frame.main_frame, width=25)
+        self.count_box.place(anchor='nw', x=200, y=75)
 
 
 class ExtractLabels:
@@ -98,6 +127,16 @@ class ExtractLabels:
         self.load_label = tk.Label(self.gui_obj.frame.main_frame, text='')
         self.load_label.place(anchor='nw', x=125, y=110)
 
+
+class UpdateLabels:
+
+    def __init__(self, gui_obj):
+        self.gui_obj = gui_obj
+        self.pass_label = tk.Label(self.gui_obj.frame.main_frame, text='Vcommerce Password:')
+        self.pass_label.place(anchor='nw', x=40, y=25)
+        self.count_label = tk.Label(self.gui_obj.frame.main_frame, text='Update Count:')
+        self.count_label.place(anchor='nw', x=40, y=75)
+        
 
 class ApproveListBox:
 
@@ -199,5 +238,26 @@ class ApproveButtons:
         self.gui_obj.listbox.approval_list.delete(0, 'end')
         self.confirm_update_button.config(state="disabled")
 
+
+class UpdateButtons:
+
+    def __init__(self, gui_obj):
+        self.gui_obj = gui_obj
+        self.quit_button = tk.Button(self.gui_obj.frame.main_frame, text='Quit', width=12, command=self.press_quit)
+        self.quit_button.place(anchor='nw', x=275, y=175)
+        self.pull_button = tk.Button(self.gui_obj.frame.main_frame, text='Pull Updates', width=12, command=self.press_update)
+        self.pull_button.place(anchor='nw', x=25, y=175)
+
+    def press_quit(self):
+        self.gui_obj.root.destroy()
+
+    def press_update(self):
+        vc_password = self.gui_obj.entry_boxes.pass_box.get()
+        update_count = self.gui_obj.entry_boxes.count_box.get()
+        updater = Updater(vc_password, update_count)
+        updater.prep_update()
+        updater.process_update()
+        updater.chromedriver_close()
+        self.gui_obj.entry_boxes.count_box.delete(0, 'end')
 
 

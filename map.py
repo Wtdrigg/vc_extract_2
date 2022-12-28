@@ -56,5 +56,12 @@ class Map:
                                                     '/li[2]/a',
 
                            'cert_download': '/html/body/div[5]/div[2]/div/div/div[2]/div/form/table/tbody/tr[7]/td[2]'
-                                            '/div/table/tbody/tr/td[1]/div/a/span'
+                                            '/div/table/tbody/tr/td[1]/div/a/span',
+                           'approve_search_results': '//*[@id="ApprNotifications_body"]/div[5]/table/tbody/tr[2]/td/div/form/table/tbody/tr[2]/td/table/tbody/tr/td/div[2]/table',
+                           'approve_summary_button': '//*[@id="PhoenixNavLink_PHX_NAV_SupplierProfile_SupplierSummary"]',
+                           'approve_summary_page_body': '//*[@id="SupplierSummary_body"]',
+                           'approve_first_item': '//*[@id="ApprNotifications_body"]/div[5]/table/tbody/tr[2]/td/div/form/table/tbody/tr[2]/td/table/tbody/tr/td/div[2]/table/tbody/tr[1]/td[1]/a',
+                           'approve_remove_button': '/html/body/div[5]/table/tbody/tr[2]/td/div/form/table/tbody/tr[2]/td/table/tbody/tr/td/div[2]/table/tbody/tr[1]/td[3]/input',
+                           'approve_login_button': '/html/body/div/div/div[2]/div[1]/div[3]/form/div/div[3]/div/button',
+                           'approve_vc_password': '/html/body/div/div/div[2]/div[1]/div[3]/form/div/div[2]/input'
                            }
