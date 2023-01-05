@@ -83,6 +83,7 @@ class VendorInfo:
                                   'HVAC Repair': 2,
                                   'Landscaping': 2,
                                   'Mapping and Surveying': 2,
+                                  'Marine - Not Using a Vessel': 1,
                                   'Marine - Using a Vessel': 4,
                                   'Mobile Eqt On Site Repair': 1,
                                   'Other Facilities Services On Site': 2,

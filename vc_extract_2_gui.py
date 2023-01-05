@@ -207,7 +207,7 @@ class ApproveButtons:
     def __init__(self, gui_obj):
         self.gui_obj = gui_obj
         self.approval_obj = None
-        self.previous_approval_names = []
+        self.csv_names = []
         self.confirm_update_button = tk.Button(self.gui_obj.frame.main_frame, text="Confirm Vendors Approved",
                                                command=self.press_confirm, state="disabled")
         self.confirm_update_button.place(anchor='nw', x=10, y=175)
@@ -223,18 +223,17 @@ class ApproveButtons:
     def press_load(self):
         self.approval_obj = Approval()
         self.approval_obj.get_approval_list()
-        for row in self.approval_obj.approval_worksheet:
-            approved_vendor_name = row[1].value
-            self.previous_approval_names.append(approved_vendor_name)
-        for count, item in enumerate(self.approval_obj.approved_vendor_list):
-            vc_number, vendor_name = item
-            if vendor_name not in self.previous_approval_names:
-                self.gui_obj.listbox.approval_list.insert(count, vendor_name)
+        for row in self.approval_obj.approval_csv_worksheet:
+            if row[1].row != 1:
+                approved_vendor_name = row[1].value
+                self.csv_names.append(approved_vendor_name)
+        for count, item in enumerate(self.csv_names):
+            if item not in self.approval_obj.approved_vendor_list:
+                self.gui_obj.listbox.approval_list.insert(count, item)
         self.confirm_update_button.config(state="normal")
 
     def press_confirm(self):
         self.approval_obj.confirm_approval()
-        self.approval_obj.format_and_save_excel()
         self.gui_obj.listbox.approval_list.delete(0, 'end')
         self.confirm_update_button.config(state="disabled")
 
