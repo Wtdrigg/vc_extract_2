@@ -5,9 +5,9 @@ the primary classes' constructor.
 """
 
 import tkinter as tk
-from vc_extractor import Extractor
-from vc_approval import Approval
-from vc_update import Updater
+from vc_extract_mode import Extract
+from vc_approve_mode import Approve
+from vc_update_mode import Update
 
 
 class ExtractGUI:
@@ -17,10 +17,10 @@ class ExtractGUI:
     def __init__(self):
         self.root = tk.Tk()
         self.root.geometry('400x225')
-        self.root.title('VC Extract 2 - Extraction Mode')
+        self.root.title('VC Extract 2 - Extract Mode')
         self.root.resizable(width=False, height=False)
         self.main_menu = MenuBar(self)
-        self.frame = ExtractFrame(self)
+        self.frame = Frame(self)
         self.entry_boxes = ExtractEntryBox(self)
         self.labels = ExtractLabels(self)
         self.buttons = ExtractButtons(self)
@@ -34,38 +34,38 @@ class MenuBar:
         self.gui_obj = gui_obj
         self.menu_bar = tk.Menu(self.gui_obj.root)
         self.file = tk.Menu(self.menu_bar, tearoff=0)
-        self.file.add_command(label='Approval Mode', command=self.click_approval)
-        self.file.add_command(label='Extraction Mode', command=self.click_extraction)
+        self.file.add_command(label='Extract Mode', command=self.click_extract)
         self.file.add_command(label='Update Mode', command=self.click_update)
+        self.file.add_command(label='Approve Mode', command=self.click_approve)
         self.menu_bar.add_cascade(label='File', menu=self.file)
         self.menu_bar.add_cascade(label='Error Log')
         self.gui_obj.root.config(menu=self.menu_bar)
 
-    def click_extraction(self):
-        self.gui_obj.root.title('VC Extract 2 - Extraction Mode')
-        self.gui_obj.frame = ExtractFrame(self.gui_obj)
+    def click_extract(self):
+        self.gui_obj.root.title('VC Extract 2 - Extract Mode')
+        self.gui_obj.frame = Frame(self.gui_obj)
         self.gui_obj.entry_boxes = ExtractEntryBox(self.gui_obj)
         self.gui_obj.labels = ExtractLabels(self.gui_obj)
         self.gui_obj.buttons = ExtractButtons(self.gui_obj)
         self.gui_obj.root.update()
 
-    def click_approval(self):
-        self.gui_obj.root.title('VC Extract 2 - Approval Mode')
-        self.gui_obj.frame = ApproveFrame(self.gui_obj)
-        self.gui_obj.listbox = ApproveListBox(self.gui_obj)
-        self.gui_obj.buttons = ApproveButtons(self.gui_obj)
-        self.gui_obj.root.update()
-
     def click_update(self):
         self.gui_obj.root.title('VC Extract 2 - Update Mode')
-        self.gui_obj.frame = UpdateFrame(self.gui_obj)
+        self.gui_obj.frame = Frame(self.gui_obj)
         self.gui_obj.labels = UpdateLabels(self.gui_obj)
         self.gui_obj.entry_boxes = UpdateEntryBox(self.gui_obj)
         self.gui_obj.buttons = UpdateButtons(self.gui_obj)
         self.gui_obj.root.update()
 
+    def click_approve(self):
+        self.gui_obj.root.title('VC Extract 2 - Approve Mode')
+        self.gui_obj.frame = Frame(self.gui_obj)
+        self.gui_obj.listbox = ApproveListBox(self.gui_obj)
+        self.gui_obj.buttons = ApproveButtons(self.gui_obj)
+        self.gui_obj.root.update()
 
-class ExtractFrame:
+
+class Frame:
 
     # Constructor builds the extraction frame object and places it in the GUI root.
     def __init__(self, gui_obj):
@@ -73,23 +73,6 @@ class ExtractFrame:
         self.main_frame = tk.Frame(self.gui_obj.root, bd=5)
         self.main_frame.place(anchor='nw', width=400, height=225)
 
-
-class ApproveFrame:
-
-    # Constructor builds the approval frame object and places it in the GUI root.
-    def __init__(self, gui_obj):
-        self.gui_obj = gui_obj
-        self.main_frame = tk.Frame(self.gui_obj.root, bd=5)
-        self.main_frame.place(anchor='nw', width=400, height=225)
-
-
-class UpdateFrame:
-
-    # Constructor builds the approval frame object and places it in the GUI root.
-    def __init__(self, gui_obj):
-        self.gui_obj = gui_obj
-        self.main_frame = tk.Frame(self.gui_obj.root, bd=5)
-        self.main_frame.place(anchor='nw', width=400, height=225)
 
 class ExtractEntryBox:
 
@@ -174,7 +157,7 @@ class ExtractButtons:
             vc_number = self.gui_obj.entry_boxes.vc_num_box.get()
             self.gui_obj.labels.status_label.config(text="Extracting...")
             self.gui_obj.root.update()
-            self.extractor_obj = Extractor(vc_password, vc_number)
+            self.extractor_obj = Extract(vc_password, vc_number)
             self.extractor_obj.extract_new()
             self.extractor_obj.chromedriver_close()
             self.gui_obj.entry_boxes.vc_num_box.delete(0, 'end')
@@ -191,7 +174,7 @@ class ExtractButtons:
             vc_number = self.gui_obj.entry_boxes.vc_num_box.get()
             self.gui_obj.labels.status_label.config(text="Extracting...")
             self.gui_obj.root.update()
-            self.extractor_obj = Extractor(vc_password, vc_number)
+            self.extractor_obj = Extract(vc_password, vc_number)
             self.extractor_obj.extract_existing()
             self.extractor_obj.chromedriver_close()
             self.gui_obj.entry_boxes.vc_num_box.delete(0, 'end')
@@ -221,7 +204,7 @@ class ApproveButtons:
         self.gui_obj.root.destroy()
 
     def press_load(self):
-        self.approval_obj = Approval()
+        self.approval_obj = Approve()
         self.approval_obj.get_approval_list()
         for row in self.approval_obj.approval_csv_worksheet:
             if row[1].row != 1:
@@ -244,7 +227,8 @@ class UpdateButtons:
         self.gui_obj = gui_obj
         self.quit_button = tk.Button(self.gui_obj.frame.main_frame, text='Quit', width=12, command=self.press_quit)
         self.quit_button.place(anchor='nw', x=275, y=175)
-        self.pull_button = tk.Button(self.gui_obj.frame.main_frame, text='Pull Updates', width=12, command=self.press_update)
+        self.pull_button = tk.Button(self.gui_obj.frame.main_frame, text='Pull Updates', width=12,
+                                     command=self.press_update)
         self.pull_button.place(anchor='nw', x=25, y=175)
 
     def press_quit(self):
@@ -253,10 +237,8 @@ class UpdateButtons:
     def press_update(self):
         vc_password = self.gui_obj.entry_boxes.pass_box.get()
         update_count = self.gui_obj.entry_boxes.count_box.get()
-        updater = Updater(vc_password, update_count)
+        updater = Update(vc_password, update_count)
         updater.prep_update()
         updater.process_update()
         updater.chromedriver_close()
         self.gui_obj.entry_boxes.count_box.delete(0, 'end')
-
-

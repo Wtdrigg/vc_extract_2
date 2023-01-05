@@ -3,17 +3,15 @@ from vendor_requests import RequestsVendors
 import glob
 import csv
 from xlsxwriter.workbook import Workbook as WriteWorkbook
-from openpyxl import Workbook
 from openpyxl import load_workbook
 
 
-class Approval:
+class Approve:
 
     def __init__(self):
         self.approval_csv_workbook, self.approval_csv_worksheet = self.load_approval_csv()
         self.approved_vendor_list = []
         self.requests = RequestsVendors()
-
 
     @staticmethod
     def load_approval_csv():
@@ -35,21 +33,17 @@ class Approval:
         ex_worksheet_csv = ex_workbook_csv.worksheets[0]
         return ex_workbook_csv, ex_worksheet_csv
 
-
     def get_approval_list(self):
         past_approvals = self.requests.api_get_request()
         for json_item in past_approvals:
             vendor_name = (json_item['vendor_name'])
             self.approved_vendor_list.append(vendor_name)
 
-
     def confirm_approval(self):
         for item in self.approval_csv_worksheet:
-             if item[1].value not in self.approved_vendor_list:
+            if item[1].value not in self.approved_vendor_list:
                 if item[1].row != 1:
-                    id = (len(self.approved_vendor_list) + 1)
-                    self.requests.api_put_request(id, item[1].value)
+                    id_num = (len(self.approved_vendor_list) + 1)
+                    self.requests.api_put_request(id_num, item[1].value)
                     self.approved_vendor_list = []
                     self.get_approval_list()
-
-

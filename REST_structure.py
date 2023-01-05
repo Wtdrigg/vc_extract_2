@@ -17,11 +17,11 @@ api = Api(app)
 # This variable is used as a parameter for the @marshall_with decorator used later.
 resource_fields = {'id': fields.Integer,
                    'todo': fields.String,
-                  }
+                   }
 
 vendor_resource_fields = {'id': fields.Integer,
                           'vendor_name': fields.String,
-                         }
+                          }
 
 
 # This class is lays out the structure of a SQL database table. The is named after the class (in snake casing) and each
@@ -29,6 +29,7 @@ vendor_resource_fields = {'id': fields.Integer,
 class ToDoModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     todo = db.Column(db.String(100), nullable=False)
+
 
 class VendorsModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -52,12 +53,14 @@ class TodoArgumentParser:
         self.update_args.add_argument('id', type=int, help='id not found', location='form')
         self.update_args.add_argument('todo', type=str, help='name not found', location='form')
 
+
 class VendorArgumentParser:
 
     def __init__(self):
         self.request_args = reqparse.RequestParser()
         self.request_args.add_argument('id', type=int, help='id not found', required=True, location='form')
-        self.request_args.add_argument('vendor_name', type=str, help='vendor_name not found', required=True, location='form')
+        self.request_args.add_argument('vendor_name', type=str, help='vendor_name not found', required=True,
+                                       location='form')
 
         self.update_args = reqparse.RequestParser()
         self.update_args.add_argument('id', type=int, help='id not found', location='form')
@@ -141,18 +144,18 @@ class VendorResource(Resource):
         db.session.commit()
         return result, 201
 
+
 # Adds the endpoint to the URI. This is the endpoint that is serviced by the prior TodoResource class.
 api.add_resource(TodoResource, "/todo")
 api.add_resource(VendorResource, "/vendors")
 
 if __name__ == '__main__':
-
-# **IMPORTANT**
-# The db.create_all() method creates the database and must be run the first time the API is activated. On all subsequent
-# activations this should be either deleted or commented out, otherwise it will overwrite your previous database
-# with a new blank database.
+    # **IMPORTANT**
+    # The db.create_all() method creates the database and must be run the first time the API is activated.
+    # On all subsequent activations this should be either deleted or commented out, otherwise it will overwrite your
+    # previous database with a new blank database.
 
     with app.app_context():
         db.create_all()
 
-        #app.run()
+        # app.run()

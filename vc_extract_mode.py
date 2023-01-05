@@ -23,7 +23,7 @@ from subprocess import CREATE_NO_WINDOW
 
 # Extractor class is used to pull all vendor info from the Vcommerce system and add it to an Excel spreadsheet.
 # All vendor info pulled on the same day will go to the same Excel file.
-class Extractor:
+class Extract:
 
     # Constructor sets class attributes, opens the Excel file, and creates objects that will be used later.
     def __init__(self, vc_password, vc_number):
@@ -142,7 +142,7 @@ class Extractor:
         self.input_list = self.input_string.split()
 
     # Opens Vcommerce using the password that the user provided to the GUI, then searches for the Vcommerce number
-    # that the user provided to the GUI. GUI code is located in vc_extract_2_gui.py
+    # that the user provided to the GUI. GUI code is located in main_GUI.py
     def open_vcommerce(self):
         print('Loading Vcommerce')
         self.driver.get('https://vul.onelogin.com/login2')

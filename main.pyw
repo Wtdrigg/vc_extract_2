@@ -4,9 +4,9 @@ In order for this file to work you simply need to copy the vendors Vcommerce num
 the python file (or a packaged .exe created by pyinstaller)
 """
 
-from vc_extract_2_gui import ExtractGUI
+from main_GUI import ExtractGUI
 
-# This is the main script, it will call the ExtractGUI method from vc_extract_2_gui.py. All program controls
+# This is the main script, it will call the ExtractGUI method from main_GUI.py. All program controls
 # are handled by the GUI
 if __name__ == '__main__':
 
