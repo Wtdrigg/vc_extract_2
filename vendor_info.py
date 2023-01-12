@@ -60,7 +60,7 @@ class VendorInfo:
                           'Vermont': 'VT',
                           'Virginia': ('VA', 'Mideast', 'Cindy Keller'),
                           'Washington': 'WA',
-                          'West Virginia': 'WV',
+                          'West Virginia': ('WV', 'Mideast', 'Cindy Keller'),
                           'Wisconsin': ('WI', 'Central', 'Renee Snipes'),
                           'Wyoming': 'WY'
                          }
@@ -92,6 +92,7 @@ class VendorInfo:
                                   'Pest Control': 2,
                                   'Plumbing': 2,
                                   'Professional Services On Site': 2,
+                                  'Professional Services Not On Site': 3,
                                   'Rail Eqt Install/Repair': 1,
                                   'Scale Repair': 1,
                                   'Security - Company': 1,

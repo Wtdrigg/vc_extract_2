@@ -2,6 +2,7 @@ from os import getcwd
 from time import sleep
 from url_storage import provide_vcommerce_url
 import os
+import time
 from openpyxl import load_workbook
 import datetime
 import clipboard
@@ -283,6 +284,8 @@ class Update:
             self.parse_summary()
             self.update_spreadsheet()
             self.format_and_save_excel()
+            self.vc_remove_item()
             if i != (self.update_count - 1):
-                self.vc_remove_item()
                 self.wait_for_remove()
+            else:
+                time.sleep(5)
