@@ -6,7 +6,6 @@ import os
 import time
 import datetime
 import clipboard
-from os import getcwd
 from openpyxl import load_workbook
 from time import sleep
 from map import Map
@@ -32,7 +31,7 @@ class Extract:
         self.vc_service_type = ''
         self.input_string = ''
         self.input_list = []
-        self.cwd = getcwd()
+        self.cwd = os.getcwd()
         self.driver = self.chromedriver_setup()
         self.map = Map()
         self.actions = ActionChains(self.driver)
@@ -255,10 +254,14 @@ class Extract:
         sleep(0.5)
         insurance_link = self.driver.find_element(By.XPATH, self.map.full_xpath['insurance_custom_link'])
         insurance_link.click()
-        WebDriverWait(self.driver, 20).until(ec.presence_of_element_located((By.XPATH,
-                                                                             self.map.full_xpath['cert_download'])))
-        cert_download = self.driver.find_element(By.XPATH, self.map.full_xpath['cert_download'])
-        cert_download.click()
+        time.sleep(5)
+        cert_available = self.driver.find_elements(By.XPATH, self.map.full_xpath['cert_download'])
+        if cert_available:
+            cert_download = self.driver.find_element(By.XPATH, self.map.full_xpath['cert_download'])
+            cert_download.click()
+            self.wait_for_download()
+        else:
+            print('No certificate provided')
 
     # Checks the download folder to see if there is a file being downloaded. Files currently being downloaded
     # by chrome have the suffix .crdownload, so this method checks the downloads folder and only proceeds when
@@ -571,7 +574,6 @@ class Extract:
         self.open_vcommerce()
         self.get_vc_and_contact_info()
         self.find_and_download_cert()
-        self.wait_for_download()
         self.copy_and_parse_clipboard()
         no_id = self.find_supplier_id()
         self.find_vc_number(no_id)
@@ -593,7 +595,6 @@ class Extract:
         self.open_vcommerce()
         self.get_vc_and_contact_info()
         self.find_and_download_cert()
-        self.wait_for_download()
         self.copy_and_parse_clipboard()
         no_id = self.find_supplier_id()
         self.find_vc_number(no_id)

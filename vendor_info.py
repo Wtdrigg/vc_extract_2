@@ -96,6 +96,7 @@ class VendorInfo:
                                   'Rail Eqt Install/Repair': 1,
                                   'Scale Repair': 1,
                                   'Security - Company': 1,
+                                  'Staffing - Office': 2,
                                   'Stripping and Site Prep': 1,
                                   'Training': 2,
                                   'Welding': 1
