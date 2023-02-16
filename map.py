@@ -15,7 +15,7 @@ class Map:
 
                            'login_button': '/html/body/div/div/div[2]/div[1]/div[2]/form/div/div[3]/div/button',
 
-                           'apps_list': '/html/body/div/main/div/div[2]/div/div/div',
+                           'apps_list': '/html/body/div/div/main/div/div[2]/div/div/div',
 
                            'vc_search_bar': '/html/body/div[5]/table/tbody/tr/td/form[1]/div/div/table/tbody/tr/td/div'
                                             '/table/tbody/tr[1]/td[2]/input',
