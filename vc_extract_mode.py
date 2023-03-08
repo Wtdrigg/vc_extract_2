@@ -427,6 +427,7 @@ class Extract:
     def find_city_state_zip(csz):
         city = ''
         state_and_zip = ''
+        print('state and zip:' + state_and_zip)
         comma = False
         for letter in csz:
             # All text before the comma is the city, all text after is the state and zip code.
@@ -472,7 +473,10 @@ class Extract:
                 formatted_address = self.format_address(address)
                 # if formatted_address[0] not in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'P', 'p']:
                 #    raise Exception('Address does not begin with a number and is not a PO box.')
+                print('csz arg:' + csz_arg)
                 city, state, zip_code = self.find_city_state_zip(csz_arg)
+                if state == 'Vi':
+                    state = 'U.S. Virgin Islands'
                 self.enter_vendor_address(formatted_address, city, state, zip_code)
                 return state
 

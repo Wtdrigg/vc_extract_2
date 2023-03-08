@@ -44,7 +44,7 @@ class VendorInfo:
                           'New Hampshire': 'NH',
                           'New Jersey': ("NJ", 'Mideast', 'Cindy Keller'),
                           'New Mexico': ('NM', 'Mountain West', 'Renee Snipes'),
-                          'New York': 'NY',
+                          'New York': ('NY', 'Mideas', 'Cindy Keller'),
                           'North Carolina': ('NC', 'Mideast', 'Cindy Keller'),
                           'North Dakota': ('ND', 'Mountain West', 'Renee Snipes'),
                           'Ohio': ('OH', 'Central', 'Renee Snipes'),
@@ -62,7 +62,8 @@ class VendorInfo:
                           'Washington': 'WA',
                           'West Virginia': ('WV', 'Mideast', 'Cindy Keller'),
                           'Wisconsin': ('WI', 'Central', 'Renee Snipes'),
-                          'Wyoming': 'WY'
+                          'Wyoming': 'WY',
+                          'U.S. Virgin Islands': ('VI', 'Southern', 'Cindy Keller'),
                          }
 
         # Dict containing all vendor service types as the Keys, and the associated risk category as the Values.
@@ -99,5 +100,6 @@ class VendorInfo:
                                   'Staffing - Office': 2,
                                   'Stripping and Site Prep': 1,
                                   'Training': 2,
+                                  'Waste Removal': 2,
                                   'Welding': 1
                                  }
