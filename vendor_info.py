@@ -33,7 +33,7 @@ class VendorInfo:
                           'Louisiana': ('LA', 'Southern Gulf Coast', 'Renee Snipes'),
                           'Maine': 'ME',
                           'Maryland': ('MD', 'Mideast', 'Cindy Keller'),
-                          'Massachusetts': 'MA',
+                          'Massachusetts': ('MA', 'Mideast', 'Cindy Keller'),
                           'Michigan': ('MI', 'Central', 'Renee Snipes'),
                           'Minnesota': ('MN', 'Central', 'Renee Snipes'),
                           'Mississippi': ('MS', 'Southern Gulf Coast', 'Renee Snipes'),
@@ -44,7 +44,7 @@ class VendorInfo:
                           'New Hampshire': 'NH',
                           'New Jersey': ("NJ", 'Mideast', 'Cindy Keller'),
                           'New Mexico': ('NM', 'Mountain West', 'Renee Snipes'),
-                          'New York': ('NY', 'Mideas', 'Cindy Keller'),
+                          'New York': 'NY',
                           'North Carolina': ('NC', 'Mideast', 'Cindy Keller'),
                           'North Dakota': ('ND', 'Mountain West', 'Renee Snipes'),
                           'Ohio': ('OH', 'Central', 'Renee Snipes'),
@@ -57,13 +57,13 @@ class VendorInfo:
                           'Tennessee': ('TN', 'Southern Gulf Coast', 'Renee Snipes'),
                           'Texas': ('TX', 'Southwest', 'Cindy Keller'),
                           'Utah': 'UT',
+                          'U.S. Virgin Islands': ('VI', 'Southern', 'Cindy Keller'),
                           'Vermont': 'VT',
                           'Virginia': ('VA', 'Mideast', 'Cindy Keller'),
                           'Washington': 'WA',
                           'West Virginia': ('WV', 'Mideast', 'Cindy Keller'),
                           'Wisconsin': ('WI', 'Central', 'Renee Snipes'),
-                          'Wyoming': 'WY',
-                          'U.S. Virgin Islands': ('VI', 'Southern', 'Cindy Keller'),
+                          'Wyoming': 'WY'
                          }
 
         # Dict containing all vendor service types as the Keys, and the associated risk category as the Values.

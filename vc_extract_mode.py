@@ -98,7 +98,7 @@ class Extract:
     # Saves all changes made to the Excel spreadsheet and adjust the length of cells so all information is readable.
     # If this is a newly created spreadsheet it will be named: "BCS_New_vendors_<today's_date>"
     def format_and_save_excel(self):
-        column_names = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P')
+        column_names = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q')
         downloads_path = os.path.expanduser("~") + "/Downloads/"
         index_counter = 0
         max_length = 0
@@ -568,13 +568,17 @@ class Extract:
     def enter_vmc(self):
         blank_cell = self.find_blank_cell_in_column(self.ex_worksheet['I'])
         self.add_to_excel(blank_cell, 'Vulcan Materials Company')
+
+    def enter_reactivate(self):
+        blank_cell = self.find_blank_cell_in_column(self.ex_worksheet['Q'])
+        self.add_to_excel(blank_cell, 'Reactivate')
             
     # Extract instructions. Calls all previous methods in the correct order and passes parameters between them as
     # needed. This will Successfully log into Vcommerce, search the vendor, pull its info, format the info, and add it
     # to a spreadsheet. This will also download the vendors provided certificates of insurance.
     def extract_new(self):
         self.ex_workbook, self.ex_worksheet = self.create_excel_new_vendor()
-        self.verify_user_input()
+        #self.verify_user_input()
         self.open_vcommerce()
         self.get_vc_and_contact_info()
         self.find_and_download_cert()
@@ -595,7 +599,7 @@ class Extract:
 
     def extract_existing(self):
         self.ex_workbook, self.ex_worksheet = self.create_excel_existing_vendor()
-        self.verify_user_input()
+        #self.verify_user_input()
         self.open_vcommerce()
         self.get_vc_and_contact_info()
         self.find_and_download_cert()
@@ -610,6 +614,7 @@ class Extract:
         self.find_division(state)
         self.find_post_owner(state)
         self.enter_vmc()
+        self.enter_reactivate()
         self.format_and_save_excel()
         # clears the information from the clipboard once the extract is done.
         clipboard.copy('')
