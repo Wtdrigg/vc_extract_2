@@ -1,11 +1,20 @@
 """
-This module contains the Extractor class and imports all of its dependencies.
+This module contains the Extractor class and imports all of its dependencies. This is instantiated when using
+the "New Extract" or "Existing Extract" buttons in the GUI.
+
+IMPORTANT - I made several edits to this in my last few days at vulcan in an attempt to have this
+work for other users. As of the time of writing this appears to work as desired but some of the code
+changes were a bit messy due to the time constraint (in particular the use of HTML paths here and in
+the map.py file.) If I had more time I would clean this up more but it works for now, so I apologize for 
+the mess.
 """
 
 import os
 import time
 import datetime
 import clipboard
+import pickle
+import traceback
 from openpyxl import load_workbook
 from time import sleep
 from map import Map
@@ -26,17 +35,36 @@ class Extract:
 
     # Constructor sets class attributes, opens the Excel file, and creates objects that will be used later.
     def __init__(self, vc_password, vc_number):
-        self.vc_password = vc_password
-        self.vc_number = vc_number
-        self.vc_service_type = ''
-        self.input_string = ''
-        self.input_list = []
-        self.cwd = os.getcwd()
-        self.driver = self.chromedriver_setup()
-        self.map = Map()
-        self.actions = ActionChains(self.driver)
-        self.ex_workbook, self.ex_worksheet = (None, None)
-        self.vendor_info = VendorInfo()
+        try:
+            self.vc_password = vc_password
+            self.vc_number = vc_number
+            self.vc_service_type = ''
+            self.input_string = ''
+            self.input_list = []
+            self.cwd = os.getcwd()
+            self.driver = self.chromedriver_setup()
+            self.map = Map()
+            self.actions = ActionChains(self.driver)
+            self.ex_workbook, self.ex_worksheet = (None, None)
+            self.vendor_info = self.load_vendor_info()
+        except:
+            print(traceback.format_exc())
+
+    def load_vendor_info(self):
+        try:
+            with open('J:/VC_Extract_Files/vendor_info.pkl', 'rb') as file:
+                vendor_info_object = pickle.load(file)
+                return vendor_info_object
+        except FileNotFoundError:
+            vendor_info_object = self.save_vendor_info()
+            return vendor_info_object
+        
+    def save_vendor_info(self):
+        vi = VendorInfo()
+        with open('J:/VC_Extract_Files/vendor_info.pkl', 'wb') as file:
+            pickle.dump(vi, file)
+        return vi
+        
 
     # Checks if the input provided by the users is a correct 10 digit Vcommerce number.
     def verify_user_input(self):
@@ -98,7 +126,8 @@ class Extract:
     # Saves all changes made to the Excel spreadsheet and adjust the length of cells so all information is readable.
     # If this is a newly created spreadsheet it will be named: "BCS_New_vendors_<today's_date>"
     def format_and_save_excel(self):
-        column_names = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q')
+        print('writing to Excel')
+        column_names = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P')
         downloads_path = os.path.expanduser("~") + "/Downloads/"
         index_counter = 0
         max_length = 0
@@ -144,57 +173,77 @@ class Extract:
     # that the user provided to the GUI. GUI code is located in main_GUI.py
     def open_vcommerce(self):
         print('Loading Vcommerce')
-        self.driver.get('https://vul.onelogin.com/login2')
+        self.driver.get('https://vul.onelogin.com/portal')
         self.driver.maximize_window()
-        WebDriverWait(self.driver, 20).until(ec.presence_of_element_located((By.XPATH,
+        # Checks to see if the user auto logs in via onelogin. If so it will access Vcommerce and if not it will log in,
+        # and then access Vcommerce. I gave this a 7 second wait time to hopefully give enough time for the page to load before checking.
+        try:
+            print('Trying auto Login')
+            time.sleep(7)
+            vcommerce_button = self.driver.find_element(By.XPATH, '//a[@aria-label="Launch VCommerce - Production"]')
+            vcommerce_button.click()
+        except:
+            print('Trying Manual Login')
+            name_box_elements = self.driver.find_elements(By.ID, "username")
+            if name_box_elements:
+                continue_button_element = self.driver.find_element(By.XPATH, self.map.full_xpath['continue_button'])
+                continue_button_element.click()
+            WebDriverWait(self.driver, 20).until(ec.presence_of_element_located((By.XPATH,
                                                                              self.map.full_xpath['login_pw'])))
-        sleep(0.5)
-        vc_login_element = self.driver.find_element(By.XPATH, self.map.full_xpath['login_pw'])
-        vc_login_element.send_keys(' ')
-        vc_login_element.clear()
-        # The sleep function is used to slow down the program so that user input has time to be added correctly, or
-        # is used to wait for a page to finish loading.
-        sleep(0.5)
-        vc_login_element.send_keys(self.vc_password)
-        sleep(0.5)
-        vc_submit_element = self.driver.find_element(By.XPATH, self.map.full_xpath['login_button'])
-        vc_submit_element.click()
-        WebDriverWait(self.driver, 20).until(ec.presence_of_element_located((By.XPATH,
-                                                                             self.map.full_xpath['apps_list'])))
-        self.driver.get('https://vul.onelogin.com/client/apps/select/308232411')
-        sleep(3)
+            sleep(0.5)
+            vc_login_element = self.driver.find_element(By.XPATH, self.map.full_xpath['login_pw'])
+            vc_login_element.send_keys(' ')
+            vc_login_element.clear()
+            # The sleep function is used to slow down the program so that user input has time to be added correctly, or
+            # is used to wait for a page to finish loading.
+            sleep(0.5)
+            vc_login_element.send_keys(self.vc_password)
+            sleep(0.5)
+            vc_login_element.send_keys(Keys.ENTER)
+            WebDriverWait(self.driver, 20).until(ec.presence_of_element_located((By.XPATH,
+                                                                                self.map.full_xpath['apps_list'])))
+            vcommerce_button = self.driver.find_element(By.XPATH, '//a[@aria-label="Launch VCommerce - Production"]')
+            vcommerce_button.click()
+        print('pass try-except')
+        time.sleep(3)
         self.driver.get('https://solutions.sciquest.com/apps/Router/SupplierSearch')
-        WebDriverWait(self.driver, 20).until(ec.presence_of_element_located((By.XPATH,
-                                                                             self.map.full_xpath['vc_search_bar'])))
-        vc_search_element = self.driver.find_element(By.XPATH, self.map.full_xpath['vc_search_bar'])
-        vc_search_element.send_keys(self.vc_number)
-        sleep(1)
-        vc_search_element.send_keys(Keys.ENTER)
-        WebDriverWait(self.driver, 20).until(ec.presence_of_element_located((By.XPATH, self.map.full_xpath['vc_link'])))
-        vc_link_element = self.driver.find_element(By.XPATH, self.map.full_xpath['vc_link'])
-        vc_link_element.click()
+        self.switch_tab_to_2()
+        self.driver.close()
+        self.switch_tab_to_1()
+        self.driver.get(f'https://solutions.sciquest.com/apps/Router/SupplierProfileDashboard?CMMSP_SupplierID={self.vc_number}')
         WebDriverWait(self.driver, 20).until(ec.presence_of_all_elements_located((
-            By.XPATH, self.map.full_xpath['vc_general_button'])))
+            By.ID, "PhoenixNavLink_PHX_NAV_SupplierProfile_CorporateInfo")))
+        
+    # The switch_tab_to_1() method has the driver object switch to the first browser tab, which has Vcommerce loaded.
+    def switch_tab_to_1(self):
+        self.driver.switch_to.window(self.driver.window_handles[0])
+        
+    # The switch_tab_to_2() method has the driver object switch to the second browser tab, which has Vcommerce loaded.
+    def switch_tab_to_2(self):
+        self.driver.switch_to.window(self.driver.window_handles[1])
 
     # Navigates to the appropriate parts of the Vcommerce page and copies all data into the clipboard.
     # The copy_and_parse_clipboard function is later used to save this info to memory.
     def get_vc_and_contact_info(self):
         print('Extracting vendor data')
-        vc_general_element = self.driver.find_element(By.XPATH, self.map.full_xpath['vc_general_button'])
+        time.sleep(1)
+        vc_general_element = self.driver.find_element(By.ID, "PhoenixNavLink_PHX_NAV_SupplierProfile_CorporateInfo")
         vc_general_element.click()
+        print('in general')
+        time.sleep(1)
         WebDriverWait(self.driver, 20).until(ec.presence_of_all_elements_located((
             By.XPATH, self.map.full_xpath['vc_general_page_full'])))
-        vc_service_locator = self.driver.find_element(By.XPATH, self.map.full_xpath['vc_service_locator'])
-        self.actions.move_to_element(vc_service_locator).perform()
         self.vc_service_type = self.get_service_type()
-        sleep(0.5)
-        vc_links_locator = self.driver.find_element(By.XPATH, self.map.full_xpath['vc_link_locator'])
-        self.actions.move_to_element(vc_links_locator).perform()
-        self.actions.move_to_element(vc_links_locator).perform()
-        vc_summary_element = self.driver.find_element(By.XPATH, self.map.full_xpath['vc_summary_button'])
+        sleep(1)
+        html_element = self.driver.find_element(By.XPATH, '/html')
+        html_element.send_keys(Keys.HOME)
+        print('scrolled')
+        time.sleep(1)
+        vc_summary_element = self.driver.find_element(By.XPATH, '//*[@id="PhoenixNavLink_PHX_NAV_SupplierProfile_SupplierSummary"]')
         vc_summary_element.click()
         WebDriverWait(self.driver, 20).until(ec.presence_of_element_located((By.XPATH,
                                                                              self.map.full_xpath['vc_summary_page'])))
+        time.sleep(1)
         vc_summary_page = self.driver.find_element(By.XPATH, self.map.full_xpath['vc_summary_page_full'])
         vc_summary_page.send_keys(Keys.CONTROL + 'a')
         vc_summary_page.send_keys(Keys.CONTROL + 'c')
@@ -215,12 +264,14 @@ class Extract:
     # used as a boolean. This allows the method to be used to check for the presence of a potential web element,
     # and return True or False depending on if it is found or not.
     def get_service_type(self):
+        self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        time.sleep(1)
         multi_service = self.driver.find_elements(By.XPATH, '//*[@id="CustElement_11297_popover"]')
+        print(multi_service)
         if len(multi_service) == 1:
             service_type_element = self.driver.find_element(By.XPATH, '//*[@id="CustElement_11297_popover"]')
             service_type_element.click()
-            service_type_text = self.driver.find_element(By.XPATH, '//*[@id="CustElement_11297_popover_'
-                                                                   'tt_active"]/div[2]/div/div').text
+            service_type_text = self.driver.find_element(By.XPATH, '/html/body/div[15]/div/div[2]/div/div/div').text
             service_type_list = service_type_text.split('\n')
             return service_type_list
         else:      
@@ -228,15 +279,57 @@ class Extract:
             return single_service_type
 
     # Checks for a single vendor contact or multiple contacts, then saves their name, email, and phone to memory.
+    # This part got a little messy when updating to work on othther machines, Vcommerce can have a slightly different
+    # HTML layout depending on who is logging in. The following function essentially tests different HTML path's and 
+    # goes with the one that works. If I had more time I would make this more elegant.
     def find_contact_info(self):
         print('Finding vendor contact info')
+        time.sleep(1)
         xpath_choice_bool = self.driver.find_elements(By.XPATH, self.map.full_xpath['vc_single_contact'])
+        xpath_choice_bool2 = self.driver.find_elements(By.XPATH, self.map.full_xpath['vc_single_contact2'])
+        xpath_choice_bool3 = self.driver.find_elements(By.XPATH, self.map.full_xpath['vc_single_contact3'])
+        xpath_choice_bool4 = self.driver.find_elements(By.XPATH, self.map.full_xpath['vc_single_contact4'])
+        xpath_choice_bool5 = self.driver.find_elements(By.XPATH, self.map.full_xpath['vc_single_contact5'])
+        xpath_choice_bool6 = self.driver.find_elements(By.XPATH, self.map.full_xpath['vc_single_contact6'])
+        xpath_choice_bool7 = self.driver.find_elements(By.XPATH, self.map.full_xpath['vc_single_contact7'])
+        xpath_choice_bool8 = self.driver.find_elements(By.XPATH, self.map.full_xpath['vc_single_contact8'])
         if xpath_choice_bool:
             vendor_contact_element = self.driver.find_element(By.XPATH, self.map.full_xpath['vc_single_contact'])
+        elif xpath_choice_bool2:
+            vendor_contact_element = self.driver.find_element(By.XPATH, self.map.full_xpath['vc_single_contact2'])
+        elif xpath_choice_bool3:
+            vendor_contact_element = self.driver.find_element(By.XPATH, self.map.full_xpath['vc_single_contact3'])
+        elif xpath_choice_bool4:
+            vendor_contact_element = self.driver.find_element(By.XPATH, self.map.full_xpath['vc_single_contact4'])
+        elif xpath_choice_bool5:
+            vendor_contact_element = self.driver.find_element(By.XPATH, self.map.full_xpath['vc_single_contact5'])  
+        elif xpath_choice_bool6:
+            vendor_contact_element = self.driver.find_element(By.XPATH, self.map.full_xpath['vc_single_contact6']) 
+        elif xpath_choice_bool7:
+            vendor_contact_element = self.driver.find_element(By.XPATH, self.map.full_xpath['vc_single_contact7'])
+        elif xpath_choice_bool8:
+            vendor_contact_element = self.driver.find_element(By.XPATH, self.map.full_xpath['vc_single_contact8'])
         else:
-            vendor_contact_element = self.driver.find_element(By.XPATH, self.map.full_xpath['vc_multi_contact'])
+            vendor_contact_element_test = self.driver.find_elements(By.XPATH, self.map.full_xpath['vc_multi_contact'])
+            vendor_contact_element_test2 = self.driver.find_elements(By.XPATH, self.map.full_xpath['vc_multi_contact2'])
+            if vendor_contact_element_test:
+                vendor_contact_element = self.driver.find_element(By.XPATH, self.map.full_xpath['vc_multi_contact'])
+            elif vendor_contact_element_test2:
+                vendor_contact_element = self.driver.find_element(By.XPATH, self.map.full_xpath['vc_multi_contact2'])
+            else:
+                vc_name, vc_phone, vc_email = 'N/A'
+                return vc_name, vc_phone, vc_email
+
         vendor_contact_element.click()
-        vendor_popup_text = self.driver.find_element(By.XPATH, self.map.full_xpath['vc_contact_popup']).text
+        time.sleep(1)
+        vendor_popup_check = self.driver.find_elements(By.XPATH, self.map.full_xpath['vc_contact_popup2'])
+        if vendor_popup_check:
+            vendor_popup_text = self.driver.find_element(By.XPATH, self.map.full_xpath['vc_contact_popup2']).text
+            vendor_popup_list = vendor_popup_text.split()
+        else:
+            vendor_popup_text = self.driver.find_element(By.XPATH, self.map.full_xpath['vc_contact_popup']).text
+            vendor_popup_list = vendor_popup_text.split()
+
         vendor_popup_list = vendor_popup_text.split()
         vc_name = vendor_popup_list[0] + ' ' + vendor_popup_list[1]
         if vendor_popup_list[2] == '+1':
@@ -256,8 +349,13 @@ class Extract:
         insurance_link.click()
         time.sleep(5)
         cert_available = self.driver.find_elements(By.XPATH, self.map.full_xpath['cert_download'])
+        cert_available_alternate = self.driver.find_elements(By.XPATH, self.map.full_xpath['cert_download2'])
         if cert_available:
             cert_download = self.driver.find_element(By.XPATH, self.map.full_xpath['cert_download'])
+            cert_download.click()
+            self.wait_for_download()
+        elif cert_available_alternate:
+            cert_download = self.driver.find_element(By.XPATH, self.map.full_xpath['cert_download2'])
             cert_download.click()
             self.wait_for_download()
         else:
@@ -544,7 +642,7 @@ class Extract:
     def find_division(self, state):
         print('Finding Division')
         post_info = self.vendor_info.post_info[state]
-        if type(post_info) == tuple:
+        if type(post_info) == list:
             company_division = post_info[1]
             blank_cell = self.find_blank_cell_in_column(self.ex_worksheet['J'])
             self.add_to_excel(blank_cell, company_division)
@@ -556,7 +654,7 @@ class Extract:
     def find_post_owner(self, state):
         print('Finding POST owner')
         post_owner_tuple = self.vendor_info.post_info[state]
-        if type(post_owner_tuple) == tuple:
+        if type(post_owner_tuple) == list:
             post_owner = post_owner_tuple[2]
             blank_cell = self.find_blank_cell_in_column(self.ex_worksheet['K'])
             self.add_to_excel(blank_cell, post_owner)
@@ -568,53 +666,50 @@ class Extract:
     def enter_vmc(self):
         blank_cell = self.find_blank_cell_in_column(self.ex_worksheet['I'])
         self.add_to_excel(blank_cell, 'Vulcan Materials Company')
-
-    def enter_reactivate(self):
-        blank_cell = self.find_blank_cell_in_column(self.ex_worksheet['Q'])
-        self.add_to_excel(blank_cell, 'Reactivate')
             
     # Extract instructions. Calls all previous methods in the correct order and passes parameters between them as
     # needed. This will Successfully log into Vcommerce, search the vendor, pull its info, format the info, and add it
     # to a spreadsheet. This will also download the vendors provided certificates of insurance.
     def extract_new(self):
-        self.ex_workbook, self.ex_worksheet = self.create_excel_new_vendor()
-        #self.verify_user_input()
-        self.open_vcommerce()
-        self.get_vc_and_contact_info()
-        self.find_and_download_cert()
-        self.copy_and_parse_clipboard()
-        no_id = self.find_supplier_id()
-        self.find_vc_number(no_id)
-        self.find_vendor_name()
-        self.find_vendor_dba()
-        state = self.find_vendor_address()
-        self.enter_service_type()
-        self.enter_vendor_tier()
-        self.find_division(state)
-        self.find_post_owner(state)
-        self.enter_vmc()
-        self.format_and_save_excel()
-        # clears the information from the clipboard once the extract is done.
-        clipboard.copy('')
+            self.ex_workbook, self.ex_worksheet = self.create_excel_new_vendor()
+            self.verify_user_input()
+            self.open_vcommerce()
+            self.get_vc_and_contact_info()
+            self.find_and_download_cert()
+            self.copy_and_parse_clipboard()
+            no_id = self.find_supplier_id()
+            self.find_vc_number(no_id)
+            self.find_vendor_name()
+            self.find_vendor_dba()
+            state = self.find_vendor_address()
+            self.enter_service_type()
+            self.enter_vendor_tier()
+            self.find_division(state)
+            self.find_post_owner(state)
+            self.enter_vmc()
+            self.format_and_save_excel()
+            # clears the information from the clipboard once the extract is done.
+            clipboard.copy('')
+            print('Extract Completed')
 
     def extract_existing(self):
-        self.ex_workbook, self.ex_worksheet = self.create_excel_existing_vendor()
-        #self.verify_user_input()
-        self.open_vcommerce()
-        self.get_vc_and_contact_info()
-        self.find_and_download_cert()
-        self.copy_and_parse_clipboard()
-        no_id = self.find_supplier_id()
-        self.find_vc_number(no_id)
-        self.find_vendor_name()
-        self.find_vendor_dba()
-        state = self.find_vendor_address()
-        self.enter_service_type()
-        self.enter_vendor_tier()
-        self.find_division(state)
-        self.find_post_owner(state)
-        self.enter_vmc()
-        self.enter_reactivate()
-        self.format_and_save_excel()
-        # clears the information from the clipboard once the extract is done.
-        clipboard.copy('')
+            self.ex_workbook, self.ex_worksheet = self.create_excel_existing_vendor()
+            self.verify_user_input()
+            self.open_vcommerce()
+            self.get_vc_and_contact_info()
+            self.find_and_download_cert()
+            self.copy_and_parse_clipboard()
+            no_id = self.find_supplier_id()
+            self.find_vc_number(no_id)
+            self.find_vendor_name()
+            self.find_vendor_dba()
+            state = self.find_vendor_address()
+            self.enter_service_type()
+            self.enter_vendor_tier()
+            self.find_division(state)
+            self.find_post_owner(state)
+            self.enter_vmc()
+            self.format_and_save_excel()
+            # clears the information from the clipboard once the extract is done.
+            clipboard.copy('')
+            print('Extract Completed')

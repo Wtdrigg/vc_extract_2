@@ -3,8 +3,10 @@ from flask_restful import Api, Resource, reqparse, abort, fields, marshal_with
 from flask_sqlalchemy import SQLAlchemy
 
 """
-This file contains the code for the Rest API backend that stores the names of compliant vendors. This is used by 
-vc_approve_mode.py to help identify which new vendors are ready for approval.
+!!!!!!!!!!!! NO LONGER IN USE !!!!!!!!!!!!!
+
+This file contains the code to run the todo app's API and database. The API is made using flask_restful and
+database is made using flask_sqlalchemy.
 """
 
 # Creates the Flask app object and the API and Database wrappers.

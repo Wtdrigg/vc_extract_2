@@ -1,3 +1,8 @@
+""" 
+This module contains the Update class, which is used to pull the vendor ID number updates from Vcommerce. it is instantiated when
+using the Update Mode section of the GUI.
+"""
+
 from os import getcwd
 from time import sleep
 from url_storage import provide_vcommerce_url
@@ -132,35 +137,39 @@ class Update:
     # The open_vcommerce() method has the webdriver object open the Vendor ID update list in Vcommerce and then wait
     # for the list to load.
     def open_vcommerce(self):
-        print('Opening Vcommerce')
+        print('Loading Vcommerce')
+        self.driver.get('https://vul.onelogin.com/portal')
+        self.driver.maximize_window()
         try:
-            self.driver.get(provide_vcommerce_url())
-        except NameError:
-            self.driver.get('www.google.com')
-            raise Exception("Error, the vcommerce URL was not provided. This URL is returned by the "
-                            "provide_vcommerce_url() function. This is located in url_storage.py, which has not been "
-                            "uploaded to Github due to company privacy reasons")
-        sleep(3)
-
-        # Sometimes Vcommerce will go directly to the page without going to the login screen first. The following
-        # logic checks to see if the login page has loaded, and will log in if so. If the login page has not loaded
-        # it will check to see if the Vcommerce search results have loaded and continue on if so (and raise a timeout
-        # exception if not).
-        login_verify = self.driver.find_elements(By.XPATH, self.map.full_xpath['approve_login_button'])
-        if login_verify:
-            vc_password_element = self.driver.find_element(By.XPATH, self.map.full_xpath['approve_vc_password'])
-            vc_password_element.send_keys(' ')
-            vc_password_element.clear()
+            time.sleep(7)
+            vcommerce_button = self.driver.find_element(By.XPATH, '//a[@aria-label="Launch VCommerce - Production"]')
+            vcommerce_button.click()
+        except:
+            name_box_elements = self.driver.find_elements(By.ID, "username")
+            if name_box_elements:
+                continue_button_element = self.driver.find_element(By.XPATH, self.map.full_xpath['continue_button'])
+                continue_button_element.click()
+            WebDriverWait(self.driver, 20).until(ec.presence_of_element_located((By.XPATH,
+                                                                             self.map.full_xpath['login_pw'])))
             sleep(0.5)
-            vc_password_element.send_keys(self.vc_password)
+            vc_login_element = self.driver.find_element(By.XPATH, self.map.full_xpath['login_pw'])
+            vc_login_element.send_keys(' ')
+            vc_login_element.clear()
+            # The sleep function is used to slow down the program so that user input has time to be added correctly, or
+            # is used to wait for a page to finish loading.
             sleep(0.5)
-            login_button_element = self.driver.find_element(By.XPATH, self.map.full_xpath['approve_login_button'])
-            login_button_element.click()
-            WebDriverWait(self.driver, 20).until(ec.presence_of_element_located((By.XPATH, self.map.full_xpath[
-                'approve_search_results'])))
-        else:
-            WebDriverWait(self.driver, 20).until(ec.presence_of_element_located((By.XPATH, self.map.full_xpath[
-                'approve_search_results'])))
+            vc_login_element.send_keys(self.vc_password)
+            sleep(0.5)
+            vc_login_element.send_keys(Keys.ENTER)
+            WebDriverWait(self.driver, 20).until(ec.presence_of_element_located((By.XPATH,
+                                                                                self.map.full_xpath['apps_list'])))
+            vcommerce_button = self.driver.find_element(By.XPATH, '//a[@aria-label="Launch VCommerce - Production"]')
+            vcommerce_button.click()
+        time.sleep(3)
+        self.driver.get('https://solutions.sciquest.com/apps/Router/ApprNotifications?SelectedTab=ApprNotificationSupplierRegistration')
+        self.switch_tab_to_2()
+        self.driver.close()
+        self.switch_tab_to_1()
 
     # The vc_open_summary() method has the webdriver select and open the first vendor link on the Vcommerce
     # vendor list in a new tab.

@@ -1,7 +1,6 @@
 """
 The purpose of this program is to automate some common data entry tasks associated with new vendor registration.
-In order for this file to work you simply need to copy the vendors Vcommerce number into your clipboard and then run
-the python file (or a packaged .exe created by pyinstaller)
+See INSTRUCTIONS.txt for more info on how to run.
 """
 
 from main_GUI import ExtractGUI

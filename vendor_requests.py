@@ -1,6 +1,7 @@
 import requests
 
 """
+!!!!!!!!!!!! NO LONGER IN USE !!!!!!!!!!!!!
 This file is used to send http requests to the vendors API, which will process the requests accordingly.
 """
 

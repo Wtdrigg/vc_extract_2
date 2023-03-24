@@ -1,10 +1,13 @@
 """
 This file contains all code for the extractors GUI. GUI consists of a central class (ExtractGUI) with several other
 supporting classes that each contain the code for different types of widgets. All widget classes are instantiated by
-the primary classes' constructor.
+the primary classes' constructor and each element can access the elements of every other widget class. This is made using
+the tkinter module included with the Python Standard Library.
 """
 
+import pickle
 import tkinter as tk
+from vendor_info import VendorInfo
 from vc_extract_mode import Extract
 from vc_approve_mode import Approve
 from vc_update_mode import Update
@@ -15,6 +18,7 @@ class ExtractGUI:
     # Constructor, builds the GUI object and the widgets. Also sets GUI root parameters, and begins the main event
     # loop.
     def __init__(self):
+        self.load_vendor_info()
         self.root = tk.Tk()
         self.root.geometry('400x225')
         self.root.title('VC Extract 2 - Extract Mode')
@@ -27,6 +31,21 @@ class ExtractGUI:
         self.listbox = None
         self.root.mainloop()
 
+    def load_vendor_info(self):
+        try:
+            with open('J:/VC_Extract_Files/vendor_info.pkl', 'rb') as file:
+                vendor_info_object = pickle.load(file)
+                return vendor_info_object
+        except FileNotFoundError:
+            vendor_info_object = self.save_vendor_info()
+            return vendor_info_object
+        
+    def save_vendor_info(self):
+        vi = VendorInfo()
+        with open('J:/VC_Extract_Files/vendor_info.pkl', 'wb') as file:
+            pickle.dump(vi, file)
+        return vi
+
 
 class MenuBar:
 
@@ -34,11 +53,13 @@ class MenuBar:
         self.gui_obj = gui_obj
         self.menu_bar = tk.Menu(self.gui_obj.root)
         self.file = tk.Menu(self.menu_bar, tearoff=0)
+        self.info = tk.Menu(self.menu_bar, tearoff=0)
         self.file.add_command(label='Extract Mode', command=self.click_extract)
         self.file.add_command(label='Update Mode', command=self.click_update)
         self.file.add_command(label='Approve Mode', command=self.click_approve)
+        self.info.add_command(label='States and Post Owners', command=self.click_states)
         self.menu_bar.add_cascade(label='File', menu=self.file)
-        self.menu_bar.add_cascade(label='Error Log')
+        self.menu_bar.add_cascade(label='Vendor Info', menu=self.info)
         self.gui_obj.root.config(menu=self.menu_bar)
 
     def click_extract(self):
@@ -63,6 +84,26 @@ class MenuBar:
         self.gui_obj.listbox = ApproveListBox(self.gui_obj)
         self.gui_obj.buttons = ApproveButtons(self.gui_obj)
         self.gui_obj.root.update()
+
+    def click_states(self):
+        self.gui_obj.root.title('VC Extract 2 - Edit States')
+        self.gui_obj.frame = Frame(self.gui_obj)
+        self.gui_obj.listbox = EditListBox(self.gui_obj)
+        self.gui_obj.entrybox = EditEntryBox(self.gui_obj)
+        self.gui_obj.labels = EditLabels(self.gui_obj)
+        self.gui_obj.buttons = EditButtons(self.gui_obj)
+        self.vendor_info = self.load_vendor_info()
+        self.display_vendor_info()
+        self.gui_obj.root.update()
+
+    def load_vendor_info(self):
+        with open('J:/VC_Extract_Files/vendor_info.pkl', 'rb') as file:
+            vendor_info_object = pickle.load(file)
+            return vendor_info_object
+        
+    def display_vendor_info(self):
+        for count, item in enumerate(self.vendor_info.post_info.keys()):
+            self.gui_obj.listbox.edit_list.insert(count, item)
 
 
 class Frame:
@@ -95,6 +136,16 @@ class UpdateEntryBox:
         self.count_box = tk.Entry(self.gui_obj.frame.main_frame, width=25)
         self.count_box.place(anchor='nw', x=200, y=75)
 
+class EditEntryBox:
+
+    # Constructor builds the entry box objects and places them in the GUI root.
+    def __init__(self, gui_obj):
+        self.gui_obj = gui_obj
+        self.edit_box = tk.Entry(self.gui_obj.frame.main_frame, width=25)
+        self.edit_box.place(anchor='nw', x=200, y=75)
+        self.division_edit_box = tk.Entry(self.gui_obj.frame.main_frame, width=25)
+        self.division_edit_box.place(anchor='nw', x=200, y=125)
+
 
 class ExtractLabels:
 
@@ -107,6 +158,8 @@ class ExtractLabels:
         self.vc_num_label.place(anchor='nw', x=40, y=75)
         self.status_label = tk.Label(self.gui_obj.frame.main_frame, text='Extract Ready')
         self.status_label.place(anchor='nw', x=150, y=110)
+        self.status_label2 = tk.Label(self.gui_obj.frame.main_frame, text='Please make sure you can access the J Drive before using.')
+        self.status_label2.place(anchor='nw', x=50, y=130)
         self.load_label = tk.Label(self.gui_obj.frame.main_frame, text='')
         self.load_label.place(anchor='nw', x=125, y=110)
 
@@ -119,6 +172,22 @@ class UpdateLabels:
         self.pass_label.place(anchor='nw', x=40, y=25)
         self.count_label = tk.Label(self.gui_obj.frame.main_frame, text='Update Count:')
         self.count_label.place(anchor='nw', x=40, y=75)
+
+class EditLabels:
+
+    def __init__(self, gui_obj):
+        self.gui_obj = gui_obj
+        self.edit_label = tk.Label(self.gui_obj.frame.main_frame, text='...')
+        self.edit_label.place(anchor='nw', x=200, y=0)
+
+        self.division_label = tk.Label(self.gui_obj.frame.main_frame, text='...')
+        self.division_label.place(anchor='nw', x=200, y=25)
+
+        self.update_division_label = tk.Label(self.gui_obj.frame.main_frame, text='-Update Division-')
+        self.update_division_label.place(anchor='nw', x=200, y=100)
+
+        self.update_post_label = tk.Label(self.gui_obj.frame.main_frame, text='-Update Post Owner-')
+        self.update_post_label.place(anchor='nw', x=200, y=50)
         
 
 class ApproveListBox:
@@ -127,6 +196,13 @@ class ApproveListBox:
         self.gui_obj = gui_obj
         self.approval_list = tk.Listbox(self.gui_obj.frame.main_frame, height=9, width=60)
         self.approval_list.place(anchor='nw', x=10, y=10)
+
+class EditListBox:
+
+    def __init__(self, gui_obj):
+        self.gui_obj = gui_obj
+        self.edit_list = tk.Listbox(self.gui_obj.frame.main_frame, height=9, width=30)
+        self.edit_list.place(anchor='nw', x=10, y=10)
 
 
 class ExtractButtons:
@@ -164,7 +240,7 @@ class ExtractButtons:
             self.gui_obj.labels.status_label.config(text="Extract Completed")
             self.gui_obj.root.update()
         except Exception:
-            self.gui_obj.labels.status_label.config(text="Error Detected")
+            self.gui_obj.labels.status_label.config(text="Error Detected - Manual Entry Required")
             self.gui_obj.root.update()
 
     def press_exist_extract(self):
@@ -181,7 +257,7 @@ class ExtractButtons:
             self.gui_obj.labels.status_label.config(text="Extract Completed")
             self.gui_obj.root.update()
         except Exception:
-            self.gui_obj.labels.status_label.config(text="Error Detected")
+            self.gui_obj.labels.status_label.config(text="Error Detected - Manual Entry Required")
             self.gui_obj.root.update()
 
 
@@ -242,3 +318,55 @@ class UpdateButtons:
         updater.process_update()
         updater.chromedriver_close()
         self.gui_obj.entry_boxes.count_box.delete(0, 'end')
+
+class EditButtons:
+
+    def __init__(self, gui_obj):
+        self.state = ''
+        self.gui_obj = gui_obj
+        self.submit_edit_button = tk.Button(self.gui_obj.frame.main_frame, text='Update Post', width=12, command=self.press_submit)
+        self.submit_edit_button.place(anchor='nw', x=275, y=175)
+        self.submit_division_button = tk.Button(self.gui_obj.frame.main_frame, text='Update Division', width=12, command=self.press_submit_division)
+        self.submit_division_button.place(anchor='nw', x=175, y=175)
+        self.get_info_button = tk.Button(self.gui_obj.frame.main_frame, text='Open Selected', width=12, command=self.press_get)
+        self.get_info_button.place(anchor='nw', x=75, y=175)
+
+    def press_submit(self):
+        try:
+            post_name = self.gui_obj.entrybox.edit_box.get()
+            info_entry =  self.gui_obj.main_menu.vendor_info.post_info[self.state]
+            info_entry[2] = post_name
+            with open('J:/VC_Extract_Files/vendor_info.pkl', 'wb') as file:
+                pickle.dump(self.gui_obj.main_menu.vendor_info, file)
+            self.press_get()
+            self.gui_obj.entrybox.edit_box.delete(0, 'end')
+            self.gui_obj.root.update()
+        except KeyError:
+            self.gui_obj.labels.edit_label.configure(text='No State Selected')
+            self.gui_obj.labels.division_label.configure(text='No State Selected')
+
+    def press_submit_division(self):
+        try:
+            post_name = self.gui_obj.entrybox.division_edit_box.get()
+            info_entry =  self.gui_obj.main_menu.vendor_info.post_info[self.state]
+            info_entry[1] = post_name
+            with open('J:/VC_Extract_Files/vendor_info.pkl', 'wb') as file:
+                pickle.dump(self.gui_obj.main_menu.vendor_info, file)
+            self.press_get()
+            self.gui_obj.entrybox.division_edit_box.delete(0, 'end')
+            self.gui_obj.root.update()
+        except KeyError:
+            self.gui_obj.labels.edit_label.configure(text='No State Selected')
+            self.gui_obj.labels.division_label.configure(text='No State Selected')
+
+    def press_get(self):
+        selection = self.gui_obj.listbox.edit_list.curselection()
+        try:
+            self.state = self.gui_obj.listbox.edit_list.get(selection[0])
+            info = self.gui_obj.main_menu.vendor_info.post_info[self.state]
+            self.gui_obj.labels.edit_label.configure(text=str(info[2]))
+            self.gui_obj.labels.division_label.configure(text=str(info[1]))
+        except IndexError:
+            self.gui_obj.labels.edit_label.configure(text='No State Selected')
+            self.gui_obj.labels.division_label.configure(text='No State Selected')
+        
